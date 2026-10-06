@@ -1,7 +1,7 @@
 # 🕵️ Data Detective Agent
 An AI agent that profiles, cleans and analyzes any messy CSV, then exports a PDF insight report.
 
-**Live demo:** https://YOUR-USERNAME.github.io/data-detective-agent/ (bring your own DeepSeek API key)
+**Live demo:** https://inesdaldoul.github.io/data-detective-agent/ (bring your own DeepSeek API key)
 
 ## Pipeline
 Profile → Clean → Detect anomalies (IQR & Z-score) → 4 charts → DeepSeek insight report → PDF

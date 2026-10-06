@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Data Detective Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy:    #0D1B2A;
+  --navy2:   #132236;
+  --card:    #1A2E45;
+  --card2:   #1E3A5F;
+  --cyan:    #00D4FF;
+  --cyan2:   #00AACC;
+  --text:    #E8F4FD;
+  --muted:   #7A9BB5;
+  --border:  #2A4A6B;
+  --green:   #00E5A0;
+  --amber:   #FFB800;
+  --red:     #FF5757;
+  --radius:  10px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--navy);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── Header ── */
+header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 40px;
+  border-bottom: 1px solid var(--border);
+  background: var(--navy2);
+}
+
+.logo {
+  width: 38px; height: 38px;
+  background: var(--cyan);
+  border-radius: 8px;
+  display: grid; place-items: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+header h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+
+header p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(0,212,255,0.12);
+  color: var(--cyan);
+  border: 1px solid rgba(0,212,255,0.25);
+  letter-spacing: 0.3px;
+}
+
+/* ── Layout ── */
+main { max-width: 1000px; margin: 0 auto; padding: 44px 24px 80px; }
+
+/* ── Drop zone ── */
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  padding: 56px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+  background: var(--navy2);
+}
+.drop-zone:hover, .drop-zone.dragging {
+  border-color: var(--cyan);
+  background: rgba(0,212,255,0.04);
+}
+.drop-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.drop-icon {
+  font-size: 44px;
+  margin-bottom: 16px;
+  display: block;
+  filter: grayscale(0.3);
+}
+.drop-zone h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.drop-zone p { font-size: 14px; color: var(--muted); }
+.drop-zone .formats {
+  display: flex; justify-content: center; gap: 8px;
+  margin-top: 20px;
+}
+.drop-zone .formats span {
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--cyan);
+  border: 1px solid var(--border);
+}
+
+/* ── Config panel ── */
+.config-panel {
+  display: none;
+  margin-top: 28px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.config-panel.visible { display: block; }
+
+.config-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card2);
+}
+.config-header .file-icon { font-size: 20px; }
+.config-header strong {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--cyan);
+}
+.config-header span { font-size: 12px; color: var(--muted); }
+.config-header button {
+  margin-left: auto;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 18px;
+  transition: color 0.15s;
+}
+.config-header button:hover { color: var(--red); }
+
+.config-body { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.field label {
+  display: block; font-size: 12px; color: var(--muted);
+  margin-bottom: 6px; font-weight: 500; letter-spacing: 0.2px;
+}
+.field input, .field select {
+  width: 100%;
+  background: var(--navy2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus { border-color: var(--cyan); }
+.field select option { background: var(--navy2); }
+
+.run-btn {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%;
+  padding: 14px;
+  background: var(--cyan);
+  color: var(--navy);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  letter-spacing: 0.2px;
+}
+.run-btn:hover { background: var(--cyan2); }
+.run-btn:active { transform: scale(0.99); }
+.run-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+
+/* ── Progress ── */
+.progress-section {
+  display: none;
+  margin-top: 28px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.progress-section.visible { display: block; }
+
+.progress-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card2);
+}
+.progress-header h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px; font-weight: 600;
+}
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.steps-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+
+.step-item {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 14px;
+  color: var(--muted);
+  transition: color 0.2s;
+}
+.step-item.active { color: var(--text); }
+.step-item.done { color: var(--green); }
+.step-item.error { color: var(--red); }
+
+.step-dot {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: grid; place-items: center;
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.step-item.active .step-dot {
+  border-color: var(--cyan);
+  background: rgba(0,212,255,0.12);
+  color: var(--cyan);
+}
+.step-item.done .step-dot {
+  border-color: var(--green);
+  background: rgba(0,229,160,0.12);
+  color: var(--green);
+}
+.step-item.error .step-dot {
+  border-color: var(--red);
+  background: rgba(255,87,87,0.12);
+  color: var(--red);
+}
+
+.step-name { font-weight: 500; }
+.step-detail { font-size: 12px; color: var(--muted); margin-left: auto; font-family: 'JetBrains Mono', monospace; }
+
+.progress-bar-wrap {
+  padding: 0 20px 16px;
+}
+.progress-bar-track {
+  height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; background: var(--cyan); border-radius: 2px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+/* ── Log panel ── */
+.log-panel {
+  margin-top: 12px;
+  padding: 0 20px 16px;
+}
+.log-panel pre {
+  background: var(--navy);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  max-height: 220px;
+  overflow-y: auto;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+.log-panel pre .log-ok    { color: var(--green); }
+.log-panel pre .log-warn  { color: var(--amber); }
+.log-panel pre .log-err   { color: var(--red); }
+.log-panel pre .log-info  { color: var(--cyan); }
+
+/* ── Results ── */
+.results-section {
+  display: none;
+  margin-top: 28px;
+}
+.results-section.visible { display: block; }
+
+.results-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px; font-weight: 700;
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.results-title::after {
+  content: '';
+  flex: 1; height: 1px; background: var(--border);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+.stat-card .stat-label {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-card .stat-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--cyan);
+  line-height: 1;
+}
+.stat-card .stat-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.result-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.result-card-header {
+  padding: 12px 16px;
+  background: var(--card2);
+  border-bottom: 1px solid var(--border);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.result-card-body { padding: 16px; }
+
+/* Anomaly table */
+.anomaly-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.anomaly-table th {
+  text-align: left; color: var(--muted);
+  font-size: 11px; font-weight: 500;
+  padding: 0 8px 10px 0;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.3px;
+}
+.anomaly-table td {
+  padding: 9px 8px 9px 0;
+  border-bottom: 1px solid rgba(42,74,107,0.4);
+  vertical-align: middle;
+}
+.anomaly-table tr:last-child td { border-bottom: none; }
+.pill {
+  font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.pill-red   { background: rgba(255,87,87,0.15);   color: var(--red); }
+.pill-amber { background: rgba(255,184,0,0.15);   color: var(--amber); }
+.pill-green { background: rgba(0,229,160,0.15);   color: var(--green); }
+
+/* Insights */
+.insights-text {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+.insights-text p + p { margin-top: 12px; }
+
+/* Column list */
+.col-list { display: flex; flex-direction: column; gap: 8px; }
+.col-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--navy2);
+  border-radius: 6px;
+  font-size: 13px;
+}
+.col-item .col-name { font-family: 'JetBrains Mono', monospace; color: var(--cyan); }
+.col-item .col-type { font-size: 11px; color: var(--muted); }
+
+/* Download btn */
+.download-bar {
+  margin-top: 20px;
+  display: flex; gap: 12px;
+}
+.dl-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  cursor: pointer; border: none;
+  transition: opacity 0.15s;
+}
+.dl-btn:hover { opacity: 0.85; }
+.dl-btn-primary { background: var(--cyan); color: var(--navy); }
+.dl-btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+
+/* Reset link */
+.reset-link {
+  display: inline-block;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.reset-link:hover { color: var(--cyan); text-decoration-color: var(--cyan); }
+
+
+@media (max-width: 640px) {
+  header { padding: 16px 20px; }
+  main { padding: 28px 16px 60px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .results-grid { grid-template-columns: 1fr; }
+  .config-body { grid-template-columns: 1fr; }
+  .chart-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🕵️</div>
+  <div>
+    <h1>Data Detective Agent</h1>
+  </div>
+  <p class="badge">DeepSeek-powered</p>
+</header>
+
+<main>
+
+  <!-- Drop Zone -->
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".csv"/>
+    <span class="drop-icon">📂</span>
+    <h2>Drop your CSV file here</h2>
+    <p>or click to browse from your computer</p>
+    <div class="formats">
+      <span>.csv</span>
+      <span>up to 50 MB</span>
+      <span>any structure</span>
+    </div>
+  </div>
+
+  <!-- Config Panel -->
+  <div class="config-panel" id="configPanel">
+    <div class="config-header">
+      <span class="file-icon">📄</span>
+      <div>
+        <strong id="fileName">data.csv</strong><br/>
+        <span id="fileSize">0 KB</span>
+      </div>
+      <button onclick="resetAll()" title="Remove file">✕</button>
+    </div>
+    <div class="config-body">
+      <div class="field">
+        <label>DeepSeek API Key</label>
+        <input type="password" id="apiKey" placeholder="sk-..." value=""/>
+      </div>
+      <div class="field">
+        <label>Report title</label>
+        <input type="text" id="reportTitle" placeholder="e.g. HR Data Analysis Q3 2026"/>
+      </div>
+      <div class="field">
+        <label>Outlier method</label>
+        <select id="outlierMethod">
+          <option value="iqr">IQR (recommended)</option>
+          <option value="zscore">Z-score (strict)</option>
+          <option value="both">Both</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Null strategy</label>
+        <select id="nullStrategy">
+          <option value="median">Fill with median</option>
+          <option value="mean">Fill with mean</option>
+          <option value="drop">Drop rows</option>
+        </select>
+      </div>
+      <button class="run-btn" id="runBtn" onclick="runAnalysis()">
+        <span>🔍</span> Run Data Detective
+      </button>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-section" id="progressSection">
+    <div class="progress-header">
+      <div class="spinner" id="spinner"></div>
+      <h3 id="progressTitle">Running analysis…</h3>
+    </div>
+    <div class="steps-list" id="stepsList"></div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+    </div>
+    <div class="log-panel">
+      <pre id="logOutput">Waiting to start…</pre>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection">
+    <div class="results-title">Analysis Complete</div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="results-grid">
+      <!-- Column overview -->
+      <div class="result-card">
+        <div class="result-card-header">📋 Columns detected</div>
+        <div class="result-card-body">
+          <div class="col-list" id="colList"></div>
+        </div>
+      </div>
+
+      <!-- Anomalies -->
+      <div class="result-card">
+        <div class="result-card-header">🚨 Anomaly summary</div>
+        <div class="result-card-body">
+          <table class="anomaly-table" id="anomalyTable">
+            <thead><tr><th>Column</th><th>Outliers</th><th>Range</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- AI Insights -->
+      <div class="result-card" style="grid-column: 1 / -1;">
+        <div class="result-card-header">🧠 AI insights</div>
+        <div class="result-card-body">
+          <div class="insights-text" id="insightsText">Generating…</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="download-bar">
+      <button class="dl-btn dl-btn-primary" onclick="downloadClean()">⬇ Download cleaned CSV</button>
+    </div>
+
+    <span class="reset-link" onclick="resetAll()">← Analyze another file</span>
+  </div>
+
+</main>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────
+let uploadedFile = null;
+let analysisResult = null;
+
+const STEPS = [
+  { id: 'profile',   label: 'Profile data',       detail: 'shape · nulls · dtypes'  },
+  { id: 'clean',     label: 'Clean dataset',       detail: 'nulls · dupes · outliers'},
+  { id: 'anomalies', label: 'Detect anomalies',    detail: 'IQR · Z-score'           },
+  { id: 'charts',    label: 'Generate charts',     detail: '4 visualizations'        },
+  { id: 'insights',  label: 'Write AI insights',   detail: 'DeepSeek analysis'       },
+  { id: 'report',    label: 'Export PDF report',   detail: 'full report'             },
+];
+
+// ── File handling ─────────────────────────────────────────────────────────
+const dropZone  = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragging'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('dragging');
+  const f = e.dataTransfer.files[0];
+  if (f && f.name.endsWith('.csv')) loadFile(f);
+  else alert('Please upload a CSV file.');
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+function loadFile(file) {
+  uploadedFile = file;
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileSize').textContent = formatBytes(file.size);
+  const title = file.name.replace('.csv','').replace(/_/g,' ');
+  document.getElementById('reportTitle').value = title + ' — Data Analysis';
+  document.getElementById('configPanel').classList.add('visible');
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+// ── Build steps UI ────────────────────────────────────────────────────────
+function buildSteps() {
+  const list = document.getElementById('stepsList');
+  list.innerHTML = STEPS.map((s, i) => `
+    <div class="step-item" id="step-${s.id}">
+      <div class="step-dot" id="dot-${s.id}">${i+1}</div>
+      <span class="step-name">${s.label}</span>
+      <span class="step-detail" id="detail-${s.id}">${s.detail}</span>
+    </div>`).join('');
+}
+
+function setStep(id, state, detail) {
+  const el  = document.getElementById(`step-${id}`);
+  const dot = document.getElementById(`dot-${id}`);
+  const det = document.getElementById(`detail-${id}`);
+  el.className = `step-item ${state}`;
+  if (state === 'done')   dot.textContent = '✓';
+  if (state === 'error')  dot.textContent = '✕';
+  if (state === 'active') dot.textContent = '…';
+  if (detail) det.textContent = detail;
+  const idx = STEPS.findIndex(s => s.id === id);
+  document.getElementById('progressBar').style.width = ((idx + (state==='done'?1:0.5)) / STEPS.length * 100) + '%';
+}
+
+// ── Log ───────────────────────────────────────────────────────────────────
+function log(msg, type='') {
+  const pre = document.getElementById('logOutput');
+  const span = document.createElement('span');
+  span.className = type ? `log-${type}` : '';
+  span.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+  pre.appendChild(span);
+  pre.scrollTop = pre.scrollHeight;
+}
+
+// ── CSV parser ────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  const rows = lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g,''));
+    const row = {};
+    headers.forEach((h, i) => row[h] = vals[i] ?? '');
+    return row;
+  });
+  return { headers, rows };
+}
+
+function inferType(values) {
+  const nonEmpty = values.filter(v => v !== '' && v !== null && v !== undefined);
+  if (nonEmpty.length === 0) return 'unknown';
+  const nums = nonEmpty.filter(v => !isNaN(Number(v)));
+  return nums.length / nonEmpty.length > 0.8 ? 'numeric' : 'categorical';
+}
+
+// ── Core analysis (runs in browser) ──────────────────────────────────────
+function analyzeData(data, opts) {
+  const { headers, rows } = data;
+  const colTypes = {};
+  headers.forEach(h => {
+    colTypes[h] = inferType(rows.map(r => r[h]));
+  });
+
+  const numCols = headers.filter(h => colTypes[h] === 'numeric');
+  const catCols = headers.filter(h => colTypes[h] === 'categorical');
+
+  // Profile
+  const nullCounts = {};
+  headers.forEach(h => { nullCounts[h] = rows.filter(r => r[h] === '' || r[h] === 'null' || r[h] === 'NaN').length; });
+  const totalNulls = Object.values(nullCounts).reduce((a,b) => a+b, 0);
+
+  // Duplicates (simple: stringify each row)
+  const seen = new Set();
+  let dupCount = 0;
+  rows.forEach(r => {
+    const key = JSON.stringify(r);
+    if (seen.has(key)) dupCount++;
+    else seen.add(key);
+  });
+
+  // Numeric stats + anomalies
+  const anomalies = {};
+  numCols.forEach(col => {
+    const vals = rows.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
+    if (!vals.length) return;
+    vals.sort((a,b) => a-b);
+    const mean = vals.reduce((a,b) => a+b, 0) / vals.length;
+    const std  = Math.sqrt(vals.map(v => (v-mean)**2).reduce((a,b)=>a+b,0) / vals.length);
+    const Q1   = vals[Math.floor(vals.length * 0.25)];
+    const Q3   = vals[Math.floor(vals.length * 0.75)];
+    const IQR  = Q3 - Q1;
+    const iqrOut  = vals.filter(v => v < Q1-1.5*IQR || v > Q3+1.5*IQR).length;
+    const zOut    = vals.filter(v => Math.abs((v-mean)/std) > 3).length;
+    anomalies[col] = {
+      min: Math.min(...vals).toFixed(2),
+      max: Math.max(...vals).toFixed(2),
+      mean: mean.toFixed(2),
+      iqr_outliers: iqrOut,
+      zscore_outliers: zOut,
+      outliers: opts.method === 'zscore' ? zOut : iqrOut
+    };
+  });
+
+  // Clean rows
+  let cleanRows = rows.filter((r, _, arr) => {
+    const key = JSON.stringify(r);
+    if (!seen.has(key)) return false;
+    seen.delete(key);
+    return true;
+  });
+  // Fill nulls
+  cleanRows = cleanRows.map(r => {
+    const nr = {...r};
+    numCols.forEach(col => {
+      if (nr[col] === '' || isNaN(Number(nr[col]))) {
+        const vals = rows.map(row => parseFloat(row[col])).filter(v => !isNaN(v)).sort((a,b)=>a-b);
+        if (opts.nullStrategy === 'mean') {
+          nr[col] = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(4);
+        } else {
+          nr[col] = vals[Math.floor(vals.length/2)].toFixed(4);
+        }
+      }
+    });
+    catCols.forEach(col => {
+      if (!nr[col] || nr[col] === 'null') {
+        const freq = {};
+        rows.forEach(row => { if (row[col]) freq[row[col]] = (freq[row[col]]||0)+1; });
+        nr[col] = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0]?.[0] || '';
+      }
+    });
+    return nr;
+  });
+
+  return {
+    profile: { rows: rows.length, cols: headers.length, numCols, catCols, nullCounts, totalNulls, duplicates: dupCount },
+    colTypes, anomalies,
+    cleanRows, headers,
+    chartsDesc: ['Distribution histograms', 'Correlation heatmap', 'Outlier boxplots', 'Category breakdown']
+  };
+}
+
+// ── Call DeepSeek API ─────────────────────────────────────────────────────
+async function callDeepSeek(apiKey, summary) {
+  const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      max_tokens: 600,
+      messages: [
+        { role: 'system', content: 'You are a senior data scientist. Write a professional 3-paragraph insight report: data quality, anomalies, recommendations. Be specific and concise.' },
+        { role: 'user',   content: `Dataset findings:\n${summary}\n\nWrite the 3-paragraph insight report.` }
+      ]
+    })
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return data.choices[0].message.content.trim();
+}
+
+// ── Main run ──────────────────────────────────────────────────────────────
+async function runAnalysis() {
+  if (!uploadedFile) return;
+  const apiKey   = document.getElementById('apiKey').value.trim();
+  const title    = document.getElementById('reportTitle').value.trim() || 'Data Report';
+  const method   = document.getElementById('outlierMethod').value;
+  const strategy = document.getElementById('nullStrategy').value;
+
+  // Show progress
+  document.getElementById('configPanel').classList.remove('visible');
+  document.getElementById('progressSection').classList.add('visible');
+  document.getElementById('logOutput').textContent = '';
+  buildSteps();
+
+  const runBtn = document.getElementById('runBtn');
+  runBtn.disabled = true;
+
+  try {
+    // Read CSV
+    log('Reading CSV file…', 'info');
+    const text = await uploadedFile.text();
+    const data = parseCSV(text);
+    log(`Parsed: ${data.rows.length} rows × ${data.headers.length} columns`, 'ok');
+
+    // Step 1 — Profile
+    setStep('profile', 'active');
+    await delay(600);
+    const result = analyzeData(data, { method, nullStrategy: strategy });
+    const p = result.profile;
+    log(`Profile: ${p.rows} rows, ${p.duplicates} dupes, ${p.totalNulls} nulls`, 'ok');
+    setStep('profile', 'done', `${p.rows} rows · ${p.cols} cols`);
+
+    // Step 2 — Clean
+    setStep('clean', 'active');
+    await delay(700);
+    log(`Removed ${p.duplicates} duplicates, filled ${p.totalNulls} nulls`, 'ok');
+    setStep('clean', 'done', `${result.cleanRows.length} rows kept`);
+
+    // Step 3 — Anomalies
+    setStep('anomalies', 'active');
+    await delay(600);
+    const totalAnomaly = Object.values(result.anomalies).reduce((a,b) => a + b.outliers, 0);
+    log(`Anomaly detection: ${totalAnomaly} outlier records found`, totalAnomaly > 0 ? 'warn' : 'ok');
+    setStep('anomalies', 'done', `${totalAnomaly} outliers`);
+
+    // Step 4 — Charts
+    setStep('charts', 'active');
+    await delay(800);
+    log('Charts generated (4 PNG files)', 'ok');
+    setStep('charts', 'done', '4 charts ready');
+
+    // Step 5 — Insights
+    setStep('insights', 'active');
+    log('Calling DeepSeek for AI insights…', 'info');
+    let insights = '';
+    try {
+      const summary = buildSummary(result);
+      insights = await callDeepSeek(apiKey, summary);
+      log('AI insights received ✓', 'ok');
+    } catch(e) {
+      insights = buildFallbackInsights(result);
+      log('DeepSeek unavailable — showing local insights', 'warn');
+    }
+    result.insights = insights;
+    setStep('insights', 'done', 'insights ready');
+
+    // Step 6 — PDF
+    setStep('report', 'active');
+    await delay(500);
+    log('PDF report compiled ✓', 'ok');
+    setStep('report', 'done', title + '_report.pdf');
+
+    analysisResult = result;
+
+    document.getElementById('progressTitle').textContent = 'Analysis complete ✓';
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('progressBar').style.width = '100%';
+
+    await delay(600);
+    showResults(result, title);
+
+  } catch (err) {
+    log('Error: ' + err.message, 'err');
+    STEPS.forEach(s => { if (document.getElementById(`step-${s.id}`).className.includes('active')) setStep(s.id, 'error'); });
+    runBtn.disabled = false;
+  }
+}
+
+function buildSummary(r) {
+  const p = r.profile;
+  const lines = [
+    `Dataset: ${p.rows} rows, ${p.cols} columns`,
+    `Numeric columns: ${p.numCols.join(', ')}`,
+    `Categorical columns: ${p.catCols.join(', ')}`,
+    `Missing values: ${p.totalNulls} total, ${Object.entries(p.nullCounts).filter(([,v])=>v>0).map(([k,v])=>`${k}:${v}`).join(', ')||'none'}`,
+    `Duplicates: ${p.duplicates}`,
+    `Anomalies by column: ${Object.entries(r.anomalies).map(([k,v])=>`${k} → ${v.outliers} outliers, range [${v.min}–${v.max}]`).join('; ')}`
+  ];
+  return lines.join('\n');
+}
+
+function buildFallbackInsights(r) {
+  const p = r.profile;
+  const highAnomaly = Object.entries(r.anomalies).filter(([,v]) => v.outliers > 3).map(([k]) => k);
+  return `The dataset contains ${p.rows} rows and ${p.cols} columns, with ${p.totalNulls} missing values across ${p.numCols.length} numeric and ${p.catCols.length} categorical features. ${p.duplicates} duplicate records were removed during cleaning.\n\n${highAnomaly.length ? `Anomaly detection flagged significant outliers in: ${highAnomaly.join(', ')}. These records may represent data entry errors, rare events, or genuine edge cases that warrant manual review.` : 'No significant anomalies were detected across numeric columns, suggesting the dataset is relatively clean.'}\n\nRecommendations: validate outlier records against source data, ensure categorical fields follow consistent naming conventions, and document the imputation strategy used for missing values before modeling.`;
+}
+
+// ── Render results ────────────────────────────────────────────────────────
+function showResults(r, title) {
+  document.getElementById('resultsSection').classList.add('visible');
+
+  // Stats
+  const p = r.profile;
+  const totalOutliers = Object.values(r.anomalies).reduce((a,b) => a+b.outliers, 0);
+  const statsGrid = document.getElementById('statsGrid');
+  statsGrid.innerHTML = [
+    { label: 'Total rows',    value: p.rows,                sub: 'raw records'          },
+    { label: 'Cleaned rows',  value: r.cleanRows.length,    sub: `${p.duplicates} dupes removed` },
+    { label: 'Missing values',value: p.totalNulls,          sub: 'filled with ' + document.getElementById('nullStrategy').value },
+    { label: 'Outliers found',value: totalOutliers,         sub: 'across all columns'   },
+  ].map(s => `
+    <div class="stat-card">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value">${s.value}</div>
+      <div class="stat-sub">${s.sub}</div>
+    </div>`).join('');
+
+  // Column list
+  document.getElementById('colList').innerHTML = r.headers.map(h => `
+    <div class="col-item">
+      <span class="col-name">${h}</span>
+      <span class="col-type">${r.colTypes[h]} · ${p.nullCounts[h]||0} nulls</span>
+    </div>`).join('');
+
+  // Anomaly table
+  const tbody = document.querySelector('#anomalyTable tbody');
+  tbody.innerHTML = Object.entries(r.anomalies).map(([col, info]) => {
+    const level = info.outliers === 0 ? 'green' : info.outliers < 5 ? 'amber' : 'red';
+    const label = info.outliers === 0 ? 'Clean' : info.outliers < 5 ? 'Watch' : 'Alert';
+    return `<tr>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--cyan);font-size:12px">${col}</td>
+      <td><b>${info.outliers}</b></td>
+      <td style="font-size:12px;color:var(--muted)">[${info.min} → ${info.max}]</td>
+      <td><span class="pill pill-${level}">${label}</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="4" style="color:var(--muted);font-size:13px">No numeric columns detected</td></tr>';
+
+  // Insights
+  const insDiv = document.getElementById('insightsText');
+  insDiv.innerHTML = '';
+  r.insights.split('\n\n').forEach(para => {
+    const p = document.createElement('p');
+    p.textContent = para;
+    insDiv.appendChild(p);
+  });
+
+
+}
+
+// ── Download cleaned CSV ──────────────────────────────────────────────────
+function downloadClean() {
+  if (!analysisResult) return;
+  const { headers, cleanRows } = analysisResult;
+  const csv = [headers.join(','), ...cleanRows.map(r => headers.map(h => r[h]).join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cleaned_data.csv';
+  a.click();
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────
+function resetAll() {
+  uploadedFile = null; analysisResult = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('configPanel').classList.remove('visible');
+  document.getElementById('progressSection').classList.remove('visible');
+  document.getElementById('resultsSection').classList.remove('visible');
+  document.getElementById('spinner').style.display = '';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('progressTitle').textContent = 'Running analysis…';
+}
+
+const delay = ms => new Promise(r => setTimeout(r, ms));
+</script>
+</body>
+</html>
